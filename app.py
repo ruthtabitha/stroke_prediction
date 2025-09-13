@@ -1,59 +1,68 @@
 import streamlit as st
-import joblib
 import numpy as np
+import pandas as pd
+import joblib
 
-# Load model yang sudah kamu simpan
-model = joblib.load("model2_LogReg.pkl")  # ganti sesuai nama file model kamu
+# Load model
+model = joblib.load("model.pkl")
 
-# Judul & CTA
-st.set_page_config(page_title="Stroke Prediction App", page_icon="🧠", layout="centered")
+st.title("Stroke Prediction App 🚑")
 
-st.markdown(
-    """
-    <h1 style='text-align: center; color: #6C63FF;'>🧠 Stroke Possibility Prediction</h1>
-    <p style='text-align: center; color: gray;'>✨ Input complete information here & let's see the magic ✨</p>
-    """,
-    unsafe_allow_html=True,
-)
+# --- Input dari user ---
+age = st.number_input("Age", min_value=0, max_value=120, value=45)
+hypertension = st.selectbox("Hypertension", [0, 1])
+heart_disease = st.selectbox("Heart Disease", [0, 1])
+ever_married = st.selectbox("Ever Married", ["No", "Yes"])
+work_type = st.selectbox("Work Type", ["Private", "Self-employed", "Govt_job", "children", "Never_worked"])
+avg_glucose_level = st.number_input("Average Glucose Level", value=100.0, step=0.1)
+bmi = st.number_input("BMI", value=25.0, step=0.1)
+smoking_status = st.selectbox("Smoking Status", ["never smoked", "formerly smoked", "smokes", "Unknown"])
 
-st.write("👇 Yuk isi datanya dulu, jangan malu-malu:")
+# --- Buat dictionary input sesuai feature model ---
+# Mulai dengan dummy kolom
+input_dict = {
+    "id": 0,
+    "gender": 0,
+    "Residence_type": 0,
+    "age": age,
+    "hypertension": hypertension,
+    "heart_disease": heart_disease,
+    "ever_married": 1 if ever_married == "Yes" else 0,
+    "avg_glucose_level": avg_glucose_level,
+    "bmi": bmi,
+    # default one-hot untuk kategori
+    "work_type_Private": 0,
+    "work_type_Self-employed": 0,
+    "work_type_Govt_job": 0,
+    "work_type_children": 0,
+    "work_type_Never_worked": 0,
+    "smoking_status_never smoked": 0,
+    "smoking_status_formerly smoked": 0,
+    "smoking_status_smokes": 0,
+    "smoking_status_Unknown": 0
+}
 
-# Input fields
-age = st.number_input("🌱 Age", min_value=0.0, max_value=120.0, step=1.0)
+# Aktifkan kolom one-hot sesuai pilihan user
+if f"work_type_{work_type}" in input_dict:
+    input_dict[f"work_type_{work_type}"] = 1
+if f"smoking_status_{smoking_status}" in input_dict:
+    input_dict[f"smoking_status_{smoking_status}"] = 1
 
-hypertension = st.radio("💓 Hypertension Record", ["No", "Yes"])
-hypertension = 1 if hypertension == "Yes" else 0
+# --- Pastikan urutan kolom sama persis dengan model ---
+expected_cols = list(model.feature_names_in_)
+X_new = pd.DataFrame([input_dict])[expected_cols]
 
-heart_disease = st.radio("❤️ Heart Disease Record", ["No", "Yes"])
-heart_disease = 1 if heart_disease == "Yes" else 0
+st.write("Input siap dipakai model:")
+st.dataframe(X_new)
 
-ever_married = st.radio("💍 Ever Married", ["No", "Yes"])
-ever_married = 1 if ever_married == "Yes" else 0  # encode jadi 0/1
-
-work_type = st.selectbox("💼 Work Type", ["Private", "Self-employed", "Govt_job", "children"])
-
-glucose = st.number_input("🍭 Average Glucose Level", min_value=0.0, max_value=400.0, step=0.1)
-bmi = st.number_input("⚖️ BMI", min_value=0.0, max_value=80.0, step=0.1)
-
-smoking_status = st.selectbox("🚬 Smoking Status", ["formerly smoked", "smokes", "Unknown", "never smoked"])
-
-# Encode categorical features
-work_type_dict = {"Private": 0, "Self-employed": 1, "Govt_job": 2, "children": 3}
-smoking_status_dict = {"formerly smoked": 0, "smokes": 1, "Unknown": 2, "never smoked": 3}
-
-work_type = work_type_dict[work_type]
-smoking_status = smoking_status_dict[smoking_status]
-
-# Prediction button
-if st.button("✨ Predict Now ✨"):
-    X_new = np.array([[age, hypertension, heart_disease, ever_married,
-                       work_type, residence_type, glucose, bmi, smoking_status]])
-    
-    pred = model.predict(X_new)[0]
-    
-    if pred == 1:
-        st.error("⚠️ Predicted: **YES, risk of stroke detected!** 🚨 Take care and consult your doctor!")
-        st.markdown("<p style='color: red;'>Category: WARNING ⚡</p>", unsafe_allow_html=True)
-    else:
-        st.success("✅ Predicted: **NO, you're safe!** 🎉 Stay healthy and keep shining 🌟")
-        st.markdown("<p style='color: green;'>Category: NO WARNING 🌿</p>", unsafe_allow_html=True)
+# --- Prediksi ---
+if st.button("Predict"):
+    try:
+        pred = model.predict(X_new)[0]
+        if pred == 1:
+            st.error("⚠️ Predicted: YES (risk of stroke detected)")
+        else:
+            st.success("✅ Predicted: NO (no stroke detected)")
+    except Exception as e:
+        st.error("Terjadi error saat prediksi:")
+        st.exception(e)
