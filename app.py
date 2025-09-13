@@ -31,7 +31,6 @@ ever_married = st.radio("💍 Ever Married", ["No", "Yes"])
 ever_married = 1 if ever_married == "Yes" else 0  # encode jadi 0/1
 
 work_type = st.selectbox("💼 Work Type", ["Private", "Self-employed", "Govt_job", "children"])
-residence_type = st.radio("🏡 Residence Type", ["Urban", "Rural"])
 
 glucose = st.number_input("🍭 Average Glucose Level", min_value=0.0, max_value=400.0, step=0.1)
 bmi = st.number_input("⚖️ BMI", min_value=0.0, max_value=80.0, step=0.1)
@@ -40,11 +39,9 @@ smoking_status = st.selectbox("🚬 Smoking Status", ["formerly smoked", "smokes
 
 # Encode categorical features
 work_type_dict = {"Private": 0, "Self-employed": 1, "Govt_job": 2, "children": 3}
-residence_type_dict = {"Urban": 1, "Rural": 0}
 smoking_status_dict = {"formerly smoked": 0, "smokes": 1, "Unknown": 2, "never smoked": 3}
 
 work_type = work_type_dict[work_type]
-residence_type = residence_type_dict[residence_type]
 smoking_status = smoking_status_dict[smoking_status]
 
 # Prediction button
