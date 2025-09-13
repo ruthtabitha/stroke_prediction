@@ -28,48 +28,43 @@ heart_disease = st.radio("❤️ Heart Disease Record", ["No", "Yes"])
 heart_disease = 1 if heart_disease == "Yes" else 0
 
 ever_married = st.radio("💍 Ever Married", ["No", "Yes"])
-ever_married = 1 if ever_married == "Yes" else 0  # encode jadi 0/1
+ever_married = 1 if ever_married == "Yes" else 0
 
 work_type = st.selectbox("💼 Work Type", ["Private", "Self-employed", "Govt_job", "children", "Never_worked"])
+
 glucose = st.number_input("🍭 Average Glucose Level", min_value=0.0, max_value=400.0, step=0.1)
 bmi = st.number_input("⚖️ BMI", min_value=0.0, max_value=80.0, step=0.1)
 
 smoking_status = st.selectbox("🚬 Smoking Status", ["never smoked", "formerly smoked", "smokes", "Unknown"])
 
-# --- Build input dictionary (dummy cols for id, gender, residence) ---
-input_dict = {
-    "id": 0,
-    "gender": 0,
-    "Residence_type": 0,
-    "age": age,
-    "hypertension": hypertension,
-    "heart_disease": heart_disease,
-    "ever_married": ever_married,
-    "avg_glucose_level": glucose,
-    "bmi": bmi,
-    # default one-hot cols
-    "work_type_Private": 0,
-    "work_type_Self-employed": 0,
-    "work_type_Govt_job": 0,
-    "work_type_children": 0,
-    "work_type_Never_worked": 0,
-    "smoking_status_never smoked": 0,
-    "smoking_status_formerly smoked": 0,
-    "smoking_status_smokes": 0,
-    "smoking_status_Unknown": 0
-}
-
-# aktifkan sesuai input
-if f"work_type_{work_type}" in input_dict:
-    input_dict[f"work_type_{work_type}"] = 1
-if f"smoking_status_{smoking_status}" in input_dict:
-    input_dict[f"smoking_status_{smoking_status}"] = 1
-
-# --- Susun DataFrame sesuai urutan feature di model ---
+# --- Ambil daftar kolom dari model ---
 expected_cols = list(model.feature_names_in_)
+
+# --- Build input dict dengan default 0 ---
+input_dict = {col: 0 for col in expected_cols}
+
+# isi numeric / binary langsung (cek kalau ada di model)
+if "age" in input_dict: input_dict["age"] = age
+if "hypertension" in input_dict: input_dict["hypertension"] = hypertension
+if "heart_disease" in input_dict: input_dict["heart_disease"] = heart_disease
+if "ever_married" in input_dict: input_dict["ever_married"] = ever_married
+if "avg_glucose_level" in input_dict: input_dict["avg_glucose_level"] = glucose
+if "bmi" in input_dict: input_dict["bmi"] = bmi
+
+# one-hot work_type (kalau ada di model)
+wt_col = f"work_type_{work_type}"
+if wt_col in input_dict:
+    input_dict[wt_col] = 1
+
+# one-hot smoking_status (kalau ada di model)
+sm_col = f"smoking_status_{smoking_status}"
+if sm_col in input_dict:
+    input_dict[sm_col] = 1
+
+# --- Jadi DataFrame sesuai urutan model ---
 X_new = pd.DataFrame([input_dict])[expected_cols]
 
-# --- Prediction button ---
+# --- Predict button ---
 if st.button("✨ Predict Now ✨"):
     try:
         pred = model.predict(X_new)[0]
