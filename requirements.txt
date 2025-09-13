@@ -6,6 +6,7 @@ scikit-learn
 joblib
 scipy
 imbalanced-learn
-shap
+shap==0.48.0
 tabulate
 kagglehub
+streamlit
