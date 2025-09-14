@@ -44,6 +44,20 @@ bmi = st.number_input("⚖️ BMI", min_value=0.0, max_value=80.0, step=0.1)
 
 smoking_status = st.selectbox("🚬 Smoking Status", ["never smoked", "formerly smoked", "smokes", "Unknown"])
 
+# --- Ringkasan Input ---
+st.subheader("📋 Ringkasan Input:")
+summary = {
+    "Age": age,
+    "Hypertension": "Yes" if hypertension else "No",
+    "Heart Disease": "Yes" if heart_disease else "No",
+    "Ever Married": "Yes" if ever_married else "No",
+    "Work Type": work_type,
+    "Glucose": glucose,
+    "BMI": bmi,
+    "Smoking Status": smoking_status
+}
+st.table(pd.DataFrame(list(summary.items()), columns=["Feature", "Value"]))
+
 # --- Ambil daftar kolom dari model ---
 expected_cols = list(model.feature_names_in_)
 
@@ -62,31 +76,26 @@ for col, val in {
     if col in input_dict:
         input_dict[col] = val
 
-# one-hot work_type
+# one-hot work_type (abaikan jika kolom tidak ada)
 wt_col = f"work_type_{work_type}"
 if wt_col in input_dict:
     input_dict[wt_col] = 1
-else:
-    st.warning(f"⚠️ Warning: Column `{wt_col}` not found in model features. This value is ignored.")
 
-# one-hot smoking_status
+# one-hot smoking_status (abaikan jika kolom tidak ada)
 sm_col = f"smoking_status_{smoking_status}"
 if sm_col in input_dict:
     input_dict[sm_col] = 1
-else:
-    st.warning(f"⚠️ Warning: Column `{sm_col}` not found in model features. This value is ignored.")
 
 # --- Jadi DataFrame sesuai urutan model ---
 X_new = pd.DataFrame([input_dict])[expected_cols]
 
-# --- Tampilkan input sebelum prediksi ---
+# --- Tampilkan input untuk model (opsional) ---
 st.subheader("📊 Input yang dikirim ke model:")
 st.dataframe(X_new)
 
 # --- Predict button dengan probabilitas ---
 if st.button("✨ Predict Now ✨"):
     try:
-        # Prediksi probabilitas
         prob = model.predict_proba(X_new)[0][1]  # probabilitas stroke
         pred = model.predict(X_new)[0]  # 0/1
 
@@ -97,10 +106,8 @@ if st.button("✨ Predict Now ✨"):
         else:
             st.success(f"✅ Predicted: **NO, you're safe, {name if name else 'user'}!** 🎉")
 
-        # Tampilkan probabilitas
         st.info(f"📊 Estimated Stroke Risk: **{prob*100:.2f}%**")
 
-        # Kategori risiko
         if prob >= 0.7:
             st.markdown("<p style='color: red; font-weight: bold;'>Category: HIGH RISK ⚡</p>", unsafe_allow_html=True)
         elif prob >= 0.4:
