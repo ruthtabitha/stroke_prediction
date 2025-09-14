@@ -10,15 +10,22 @@ st.set_page_config(page_title="Stroke Prediction App", page_icon="🧠", layout=
 
 st.markdown(
     """
-    <h1 style='text-align: center; color: #6C63FF;'>🧠 Stroke Possibility Prediction</h1>
-    <p style='text-align: center; color: gray;'>✨ Input your details below & let's see the magic ✨</p>
+    <h1 style='text-align: center; color: #6C63FF;'>🧠 Stroke Risk Prediction</h1>
+    <p style='text-align: center; color: gray;'>✨ Input your details below & let's see your risk! ✨</p>
     """,
     unsafe_allow_html=True,
 )
 
 st.write("👇 Yuk isi datanya dulu, jangan malu-malu:")
 
-# --- Input fields ---
+# --- Input tambahan untuk tampilan ---
+name = st.text_input("📝 Your Name")
+gender = st.radio("🚻 Gender", ["Male", "Female", "Other"])
+
+if name:
+    st.write(f"Hello {name}! You are identified as {gender}.")
+
+# --- Input fields untuk model ---
 age = st.number_input("🌱 Age", min_value=0.0, max_value=120.0, step=1.0)
 
 hypertension = st.radio("💓 Hypertension Record", ["No", "Yes"])
@@ -44,37 +51,62 @@ expected_cols = list(model.feature_names_in_)
 input_dict = {col: 0 for col in expected_cols}
 
 # isi numeric / binary langsung (cek kalau ada di model)
-if "age" in input_dict: input_dict["age"] = age
-if "hypertension" in input_dict: input_dict["hypertension"] = hypertension
-if "heart_disease" in input_dict: input_dict["heart_disease"] = heart_disease
-if "ever_married" in input_dict: input_dict["ever_married"] = ever_married
-if "avg_glucose_level" in input_dict: input_dict["avg_glucose_level"] = glucose
-if "bmi" in input_dict: input_dict["bmi"] = bmi
+for col, val in {
+    "age": age,
+    "hypertension": hypertension,
+    "heart_disease": heart_disease,
+    "ever_married": ever_married,
+    "avg_glucose_level": glucose,
+    "bmi": bmi
+}.items():
+    if col in input_dict:
+        input_dict[col] = val
 
-# one-hot work_type (kalau ada di model)
+# one-hot work_type
 wt_col = f"work_type_{work_type}"
 if wt_col in input_dict:
     input_dict[wt_col] = 1
+else:
+    st.warning(f"⚠️ Warning: Column `{wt_col}` not found in model features. This value is ignored.")
 
-# one-hot smoking_status (kalau ada di model)
+# one-hot smoking_status
 sm_col = f"smoking_status_{smoking_status}"
 if sm_col in input_dict:
     input_dict[sm_col] = 1
+else:
+    st.warning(f"⚠️ Warning: Column `{sm_col}` not found in model features. This value is ignored.")
 
 # --- Jadi DataFrame sesuai urutan model ---
 X_new = pd.DataFrame([input_dict])[expected_cols]
 
-# --- Predict button ---
+# --- Tampilkan input sebelum prediksi ---
+st.subheader("📊 Input yang dikirim ke model:")
+st.dataframe(X_new)
+
+# --- Predict button dengan probabilitas ---
 if st.button("✨ Predict Now ✨"):
     try:
-        pred = model.predict(X_new)[0]
+        # Prediksi probabilitas
+        prob = model.predict_proba(X_new)[0][1]  # probabilitas stroke
+        pred = model.predict(X_new)[0]  # 0/1
+
+        st.subheader("📈 Prediction Result:")
 
         if pred == 1:
-            st.error("⚠️ Predicted: **YES, risk of stroke detected!** 🚨 Take care and consult your doctor!")
-            st.markdown("<p style='color: red; font-weight: bold;'>Category: WARNING ⚡</p>", unsafe_allow_html=True)
+            st.error(f"⚠️ Predicted: **YES, risk of stroke detected for {name if name else 'user'}!** 🚨")
         else:
-            st.success("✅ Predicted: **NO, you're safe!** 🎉 Stay healthy and keep shining 🌟")
-            st.markdown("<p style='color: green; font-weight: bold;'>Category: NO WARNING 🌿</p>", unsafe_allow_html=True)
+            st.success(f"✅ Predicted: **NO, you're safe, {name if name else 'user'}!** 🎉")
+
+        # Tampilkan probabilitas
+        st.info(f"📊 Estimated Stroke Risk: **{prob*100:.2f}%**")
+
+        # Kategori risiko
+        if prob >= 0.7:
+            st.markdown("<p style='color: red; font-weight: bold;'>Category: HIGH RISK ⚡</p>", unsafe_allow_html=True)
+        elif prob >= 0.4:
+            st.markdown("<p style='color: orange; font-weight: bold;'>Category: MEDIUM RISK ⚠️</p>", unsafe_allow_html=True)
+        else:
+            st.markdown("<p style='color: green; font-weight: bold;'>Category: LOW RISK 🌿</p>", unsafe_allow_html=True)
 
     except Exception as e:
         st.error("Terjadi error saat prediksi:")
