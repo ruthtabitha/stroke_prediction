@@ -27,21 +27,15 @@ if name:
 
 # --- Input fields untuk model ---
 age = st.number_input("🌱 Age", min_value=0.0, max_value=120.0, step=1.0)
-
 hypertension = st.radio("💓 Hypertension Record", ["No", "Yes"])
 hypertension = 1 if hypertension == "Yes" else 0
-
 heart_disease = st.radio("❤️ Heart Disease Record", ["No", "Yes"])
 heart_disease = 1 if heart_disease == "Yes" else 0
-
 ever_married = st.radio("💍 Ever Married", ["No", "Yes"])
 ever_married = 1 if ever_married == "Yes" else 0
-
 work_type = st.selectbox("💼 Work Type", ["Private", "Self-employed", "Govt_job", "children", "Never_worked"])
-
 glucose = st.number_input("🍭 Average Glucose Level", min_value=0.0, max_value=400.0, step=0.1)
 bmi = st.number_input("⚖️ BMI", min_value=0.0, max_value=80.0, step=0.1)
-
 smoking_status = st.selectbox("🚬 Smoking Status", ["never smoked", "formerly smoked", "smokes", "Unknown"])
 
 # --- Ringkasan Input ---
@@ -83,27 +77,33 @@ if sm_col in input_dict:
 
 X_new = pd.DataFrame([input_dict])[expected_cols]
 
-# --- Predict button ---
+# --- Predict button dengan threshold custom ---
+threshold = 0.1  # 10%
+
 if st.button("✨ Predict Now ✨"):
     try:
         prob = model.predict_proba(X_new)[0][1]
-        pred = model.predict(X_new)[0]
 
         st.subheader("📈 Prediction Result:")
 
-        if pred == 1:
+        # Tentukan prediksi berdasarkan threshold
+        if prob >= threshold:
             st.error(f"⚠️ Predicted: **YES, risk of stroke detected for {name if name else 'user'}!** 🚨")
         else:
             st.success(f"✅ Predicted: **NO, you're safe, {name if name else 'user'}!** 🎉")
 
+        # Tampilkan probabilitas
         st.info(f"📊 Estimated Stroke Risk: **{prob*100:.2f}%**")
 
+        # Kategori risiko dengan warna jelas
         if prob >= 0.7:
             st.markdown("<p style='color: red; font-weight: bold;'>Category: HIGH RISK ⚡</p>", unsafe_allow_html=True)
         elif prob >= 0.4:
             st.markdown("<p style='color: orange; font-weight: bold;'>Category: MEDIUM RISK ⚠️</p>", unsafe_allow_html=True)
+        elif prob >= threshold:
+            st.markdown("<p style='color: yellow; font-weight: bold;'>Category: LOW RISK ⚠️</p>", unsafe_allow_html=True)
         else:
-            st.markdown("<p style='color: green; font-weight: bold;'>Category: LOW RISK 🌿</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: green; font-weight: bold;'>Category: VERY LOW RISK 🌿</p>", unsafe_allow_html=True)
 
     except Exception as e:
         st.error("Terjadi error saat prediksi:")
