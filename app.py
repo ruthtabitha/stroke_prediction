@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 
 # --- Load model ---
-model = joblib.load("model2_LogReg.pkl")  # ganti sesuai nama file model kamu
+model = joblib.load("model2_LogReg.pkl")
 
 # --- Page Config ---
 st.set_page_config(page_title="Stroke Prediction App", page_icon="🧠", layout="centered")
@@ -58,13 +58,10 @@ summary = {
 }
 st.table(pd.DataFrame(list(summary.items()), columns=["Feature", "Value"]))
 
-# --- Ambil daftar kolom dari model ---
+# --- Build input untuk model ---
 expected_cols = list(model.feature_names_in_)
-
-# --- Build input dict dengan default 0 ---
 input_dict = {col: 0 for col in expected_cols}
 
-# isi numeric / binary langsung (cek kalau ada di model)
 for col, val in {
     "age": age,
     "hypertension": hypertension,
@@ -76,28 +73,21 @@ for col, val in {
     if col in input_dict:
         input_dict[col] = val
 
-# one-hot work_type (abaikan jika kolom tidak ada)
 wt_col = f"work_type_{work_type}"
 if wt_col in input_dict:
     input_dict[wt_col] = 1
 
-# one-hot smoking_status (abaikan jika kolom tidak ada)
 sm_col = f"smoking_status_{smoking_status}"
 if sm_col in input_dict:
     input_dict[sm_col] = 1
 
-# --- Jadi DataFrame sesuai urutan model ---
 X_new = pd.DataFrame([input_dict])[expected_cols]
 
-# --- Tampilkan input untuk model (opsional) ---
-st.subheader("📊 Input yang dikirim ke model:")
-st.dataframe(X_new)
-
-# --- Predict button dengan probabilitas ---
+# --- Predict button ---
 if st.button("✨ Predict Now ✨"):
     try:
-        prob = model.predict_proba(X_new)[0][1]  # probabilitas stroke
-        pred = model.predict(X_new)[0]  # 0/1
+        prob = model.predict_proba(X_new)[0][1]
+        pred = model.predict(X_new)[0]
 
         st.subheader("📈 Prediction Result:")
 
