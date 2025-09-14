@@ -77,8 +77,8 @@ if sm_col in input_dict:
 
 X_new = pd.DataFrame([input_dict])[expected_cols]
 
-# --- Predict button dengan threshold custom ---
-threshold = 0.1  # 10%
+# --- Predict button dengan threshold 10% ---
+threshold = 0.1  # 10% dianggap stroke
 
 if st.button("✨ Predict Now ✨"):
     try:
@@ -86,7 +86,7 @@ if st.button("✨ Predict Now ✨"):
 
         st.subheader("📈 Prediction Result:")
 
-        # Tentukan prediksi berdasarkan threshold
+        # Tentukan prediksi stroke berdasarkan threshold 10%
         if prob >= threshold:
             st.error(f"⚠️ Predicted: **YES, risk of stroke detected for {name if name else 'user'}!** 🚨")
         else:
@@ -95,15 +95,13 @@ if st.button("✨ Predict Now ✨"):
         # Tampilkan probabilitas
         st.info(f"📊 Estimated Stroke Risk: **{prob*100:.2f}%**")
 
-        # Kategori risiko dengan warna jelas
-        if prob >= 0.7:
-            st.markdown("<p style='color: red; font-weight: bold;'>Category: HIGH RISK ⚡</p>", unsafe_allow_html=True)
-        elif prob >= 0.4:
-            st.markdown("<p style='color: orange; font-weight: bold;'>Category: MEDIUM RISK ⚠️</p>", unsafe_allow_html=True)
-        elif prob >= threshold:
-            st.markdown("<p style='color: yellow; font-weight: bold;'>Category: LOW RISK ⚠️</p>", unsafe_allow_html=True)
-        else:
+        # Kategori risiko baru
+        if prob < 0.10:
             st.markdown("<p style='color: green; font-weight: bold;'>Category: VERY LOW RISK 🌿</p>", unsafe_allow_html=True)
+        elif prob < 0.15:
+            st.markdown("<p style='color: orange; font-weight: bold;'>Category: MODERATE RISK ⚠️</p>", unsafe_allow_html=True)
+        else:
+            st.markdown("<p style='color: red; font-weight: bold;'>Category: VERY HIGH RISK ⚡</p>", unsafe_allow_html=True)
 
     except Exception as e:
         st.error("Terjadi error saat prediksi:")
