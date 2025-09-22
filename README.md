@@ -25,7 +25,7 @@ The main objectives are:
 ## 📊 Data Understanding
 
 **Source:** [Kaggle Stroke Prediction Dataset](https://www.kaggle.com/fedesoriano/stroke-prediction-dataset)
-*with many manipulation since the real data had severe imbalance
+*with many modification since the real data had severe imbalance
 
 | Column            | Description |
 |-------------------|-------------|
